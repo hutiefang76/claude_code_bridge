@@ -28,6 +28,8 @@ class ProviderRequest:
     email_req_id: str = ""
     email_msg_id: str = ""
     email_from: str = ""
+    # Multi-instance support: optional instance identifier (e.g., 'auth', 'payment')
+    instance: Optional[str] = None
 
 
 @dataclass
@@ -93,12 +95,12 @@ class BaseProviderAdapter(ABC):
         ...
 
     @abstractmethod
-    def load_session(self, work_dir: Path) -> Optional[Any]:
+    def load_session(self, work_dir: Path, instance: Optional[str] = None) -> Optional[Any]:
         """Load session for the given work directory."""
         ...
 
     @abstractmethod
-    def compute_session_key(self, session: Any) -> str:
+    def compute_session_key(self, session: Any, instance: Optional[str] = None) -> str:
         """Compute a unique session key for routing."""
         ...
 

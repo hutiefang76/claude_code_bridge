@@ -201,3 +201,45 @@ QASK_CLIENT_SPEC = ProviderClientSpec(
     daemon_bin_name="askd",
     daemon_module="askd.daemon",
 )
+
+
+# ── Multi-instance provider utilities ────────────────────────────────────────
+
+
+def parse_qualified_provider(key: str) -> tuple[str, str | None]:
+    """Parse 'codex:auth' -> ('codex', 'auth'); 'codex' -> ('codex', None)."""
+    key = (key or "").strip().lower()
+    if not key:
+        return ("", None)
+    # Only split on first colon to separate provider from instance
+    parts = key.split(":", 1)
+    base = parts[0].strip()
+    instance = parts[1].strip() if len(parts) > 1 and parts[1].strip() else None
+    return (base, instance)
+
+
+def make_qualified_key(base: str, instance: str | None) -> str:
+    """Combine base provider and instance: 'codex' + 'auth' -> 'codex:auth'."""
+    base = (base or "").strip().lower()
+    if instance:
+        return f"{base}:{instance.strip()}"
+    return base
+
+
+def session_filename_for_instance(base_filename: str, instance: str | None) -> str:
+    """Derive instance-specific session filename.
+
+    '.codex-session' + 'auth' -> '.codex-auth-session'
+    '.codex-session' + None  -> '.codex-session'
+    """
+    if not instance:
+        return base_filename
+    instance = instance.strip()
+    if not instance:
+        return base_filename
+    # Insert instance before '-session' suffix
+    if base_filename.endswith("-session"):
+        prefix = base_filename[:-len("-session")]
+        return f"{prefix}-{instance}-session"
+    # Fallback: append instance before extension
+    return f"{base_filename}-{instance}"

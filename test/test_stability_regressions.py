@@ -148,7 +148,7 @@ def test_gemini_adapter_reports_cancelled_status(monkeypatch, tmp_path: Path) ->
         def wait_for_message(self, state: dict, timeout: float):
             return "", {"msg_count": 1, "session_path": self.session_path}
 
-    monkeypatch.setattr(gemini_mod, "load_project_session", lambda work_dir: _Session())
+    monkeypatch.setattr(gemini_mod, "load_project_session", lambda work_dir, instance=None: _Session())
     monkeypatch.setattr(gemini_mod, "get_backend_for_session", lambda data: _Backend())
     monkeypatch.setattr(gemini_mod, "GeminiLogReader", _Reader)
     monkeypatch.setattr(gemini_mod, "_detect_request_cancelled", lambda *args, **kwargs: True)
@@ -210,7 +210,7 @@ def test_claude_adapter_honors_cancel_event(monkeypatch, tmp_path: Path) -> None
         def wait_for_events(self, state: dict, timeout: float):
             return [], state
 
-    monkeypatch.setattr(claude_mod, "load_project_session", lambda work_dir: _Session())
+    monkeypatch.setattr(claude_mod, "load_project_session", lambda work_dir, instance=None: _Session())
     monkeypatch.setattr(claude_mod, "get_backend_for_session", lambda data: _Backend())
     monkeypatch.setattr(claude_mod, "ClaudeLogReader", _Reader)
     monkeypatch.setattr(claude_mod, "notify_completion", lambda **kwargs: notifications.append(kwargs))
