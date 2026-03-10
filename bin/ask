@@ -46,6 +46,7 @@ from compat import read_stdin_text, setup_windows_encoding
 setup_windows_encoding()
 
 from cli_output import EXIT_ERROR, EXIT_OK
+from providers import parse_qualified_provider
 from session_utils import find_project_session_file
 
 
@@ -500,18 +501,21 @@ def main(argv: list[str]) -> int:
         return EXIT_ERROR
 
     # First argument must be the provider
-    provider = argv[1].lower()
+    raw_provider = argv[1].lower()
 
-    if provider in ("-h", "--help"):
+    if raw_provider in ("-h", "--help"):
         _usage()
         return EXIT_OK
 
-    if provider not in PROVIDER_DAEMONS:
-        print(f"[ERROR] Unknown provider: {provider}", file=sys.stderr)
+    base_provider, instance = parse_qualified_provider(raw_provider)
+
+    if base_provider not in PROVIDER_DAEMONS:
+        print(f"[ERROR] Unknown provider: {base_provider}", file=sys.stderr)
         print(f"[ERROR] Available: {', '.join(PROVIDER_DAEMONS.keys())}", file=sys.stderr)
         return EXIT_ERROR
 
-    daemon_cmd = PROVIDER_DAEMONS[provider]
+    daemon_cmd = PROVIDER_DAEMONS[base_provider]
+    provider = raw_provider  # keep full qualified key for daemon routing
 
     # Parse remaining arguments
     timeout: float = 3600.0

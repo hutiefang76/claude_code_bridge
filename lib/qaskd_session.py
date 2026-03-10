@@ -20,8 +20,10 @@ from terminal import get_backend_for_session
 apply_backend_env()
 
 
-def find_project_session_file(work_dir: Path) -> Optional[Path]:
-    return _find_project_session_file(work_dir, ".qwen-session")
+def find_project_session_file(work_dir: Path, instance: Optional[str] = None) -> Optional[Path]:
+    from providers import session_filename_for_instance
+    filename = session_filename_for_instance(".qwen-session", instance)
+    return _find_project_session_file(work_dir, filename)
 
 
 def _read_json(path: Path) -> dict:
@@ -143,8 +145,8 @@ class QwenProjectSession:
         safe_write_session(self.session_file, payload)
 
 
-def load_project_session(work_dir: Path) -> Optional[QwenProjectSession]:
-    session_file = find_project_session_file(work_dir)
+def load_project_session(work_dir: Path, instance: Optional[str] = None) -> Optional[QwenProjectSession]:
+    session_file = find_project_session_file(work_dir, instance)
     if not session_file:
         return None
     data = _read_json(session_file)
@@ -155,11 +157,14 @@ def load_project_session(work_dir: Path) -> Optional[QwenProjectSession]:
     return QwenProjectSession(session_file=session_file, data=data)
 
 
-def compute_session_key(session: QwenProjectSession) -> str:
+def compute_session_key(session: QwenProjectSession, instance: Optional[str] = None) -> str:
     pid = str(session.data.get("ccb_project_id") or "").strip()
     if not pid:
         try:
             pid = compute_ccb_project_id(Path(session.work_dir))
         except Exception:
             pid = ""
-    return f"qwen:{pid}" if pid else "qwen:unknown"
+    prefix = "qwen"
+    if instance:
+        prefix = f"qwen:{instance}"
+    return f"{prefix}:{pid}" if pid else f"{prefix}:unknown"

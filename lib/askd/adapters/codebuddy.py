@@ -62,11 +62,11 @@ class CodebuddyAdapter(BaseProviderAdapter):
     def session_filename(self) -> str:
         return ".codebuddy-session"
 
-    def load_session(self, work_dir: Path) -> Optional[Any]:
-        return load_project_session(work_dir)
+    def load_session(self, work_dir: Path, instance: Optional[str] = None) -> Optional[Any]:
+        return load_project_session(work_dir, instance)
 
-    def compute_session_key(self, session: Any) -> str:
-        return compute_session_key(session) if session else "codebuddy:unknown"
+    def compute_session_key(self, session: Any, instance: Optional[str] = None) -> str:
+        return compute_session_key(session, instance) if session else "codebuddy:unknown"
 
     def handle_task(self, task: QueuedTask) -> ProviderResult:
         started_ms = _now_ms()
@@ -74,8 +74,9 @@ class CodebuddyAdapter(BaseProviderAdapter):
         work_dir = Path(req.work_dir)
         _write_log(f"[INFO] start provider=codebuddy req_id={task.req_id} work_dir={req.work_dir}")
 
-        session = load_project_session(work_dir)
-        session_key = self.compute_session_key(session)
+        instance = task.request.instance
+        session = load_project_session(work_dir, instance)
+        session_key = self.compute_session_key(session, instance)
 
         if not session:
             return ProviderResult(

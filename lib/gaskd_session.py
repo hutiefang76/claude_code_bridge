@@ -14,8 +14,10 @@ from terminal import get_backend_for_session
 apply_backend_env()
 
 
-def find_project_session_file(work_dir: Path) -> Optional[Path]:
-    return _find_project_session_file(work_dir, ".gemini-session")
+def find_project_session_file(work_dir: Path, instance: Optional[str] = None) -> Optional[Path]:
+    from providers import session_filename_for_instance
+    filename = session_filename_for_instance(".gemini-session", instance)
+    return _find_project_session_file(work_dir, filename)
 
 
 def _read_json(path: Path) -> dict:
@@ -218,8 +220,8 @@ class GeminiProjectSession:
             return
 
 
-def load_project_session(work_dir: Path) -> Optional[GeminiProjectSession]:
-    session_file = find_project_session_file(work_dir)
+def load_project_session(work_dir: Path, instance: Optional[str] = None) -> Optional[GeminiProjectSession]:
+    session_file = find_project_session_file(work_dir, instance)
     if not session_file:
         return None
     data = _read_json(session_file)
@@ -228,7 +230,7 @@ def load_project_session(work_dir: Path) -> Optional[GeminiProjectSession]:
     return GeminiProjectSession(session_file=session_file, data=data)
 
 
-def compute_session_key(session: GeminiProjectSession) -> str:
+def compute_session_key(session: GeminiProjectSession, instance: Optional[str] = None) -> str:
     """
     Compute the daemon routing/serialization key for this provider.
 
@@ -240,4 +242,7 @@ def compute_session_key(session: GeminiProjectSession) -> str:
             pid = compute_ccb_project_id(Path(session.work_dir))
         except Exception:
             pid = ""
-    return f"gemini:{pid}" if pid else "gemini:unknown"
+    prefix = "gemini"
+    if instance:
+        prefix = f"gemini:{instance}"
+    return f"{prefix}:{pid}" if pid else f"{prefix}:unknown"
